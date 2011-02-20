@@ -1,0 +1,68 @@
+#!/usr/bin/env python
+
+from __future__ import division
+
+import argparse
+import sys
+
+import xnlib.parse
+import xnlib.readers.StGeorge
+import xnlib.ui
+import xnlib.util
+
+parser = argparse.ArgumentParser(
+    description="Convert transactions to Ledger format"
+);
+parser.add_argument(
+    '--in',
+    dest='infile',
+    type=argparse.FileType('r'),
+    required=True,
+    help="the transaction input file"
+)
+parser.add_argument(
+    '--out',
+    dest='outfile',
+    type=argparse.FileType('w'),
+    required=True,
+    help="the Ledger transaction output file (will clobber existing)"
+)
+parser.add_argument(
+    '--account',
+    required=True,  # for now
+    help="the account to which the given transactions pertain"
+)
+parser.add_argument(
+    '--rules',
+    type=argparse.FileType('r'),
+    action='append',
+    default=[],
+    help='specify a rules file to read'
+)
+args = parser.parse_args()
+
+# read rules files
+rules = list(xnlib.util.flatten(map(xnlib.parse.file2rules, args.rules)))
+
+# read transactions
+xns = xnlib.readers.StGeorge.Reader(file=args.infile, account=args.account)
+xns = list(xns)
+
+# create ui
+ui = xnlib.ui.UI()
+
+# process transactions
+for xn in xns:
+    xn.process(rules, ui=ui)
+
+goodxns = []
+for xn in xns:
+    try:
+        xn.balance()
+        goodxns.append(xn)
+    except xnlib.xn.XnDataError:
+        pass
+
+# print transactions
+for xn in goodxns:
+    print >> args.outfile, xn

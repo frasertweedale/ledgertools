@@ -8,4 +8,5 @@ setup(
     author_email='frase@frase.id.au',
     url='http://frase.id.au/',
     packages=['xnlib', 'xnlib.readers', 'xnlib.test'],
+    scripts=['bin/xn2ledger'],
 )
