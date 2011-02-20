@@ -1,4 +1,5 @@
 import datetime
+import decimal
 
 from .. import reader
 from .. import xn
@@ -32,12 +33,12 @@ class Reader(reader.CsvReader):
         if fields['Credit'] and fields['Debit']:
             # this doesn't seem right...
             raise reader.DataError("Credit and Debit field present; dubious.")
-
-        xn_dict['amount'] = float(fields['Credit'] or fields['Debit'])
+        xn_dict['amount'] = \
+            decimal.Decimal(fields['Credit'] or fields['Debit'])
 
         if fields['Credit']:
-            xn_dict['dsts'] = [(self.account, xn_dict['amount'])]
+            xn_dict['dst'] = [xn.Endpoint(self.account, xn_dict['amount'])]
         else:
-            xn_dict['src'] = self.account
+            xn_dict['src'] = [xn.Endpoint(self.account, -xn_dict['amount'])]
 
         return xn.Xn(**xn_dict)
