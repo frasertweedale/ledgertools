@@ -17,13 +17,19 @@ class Endpoint(object):
         self.account = account
         self.amount = amount
 
+    def __repr__(self):
+        return 'Endpoint({0}, {1})'.format(
+            repr(self.account),
+            repr(self.amount)
+        )
+
 
 class Xn(object):
     def __init__(self, **kwargs):
         """Initialise the transaction object"""
         self.date = kwargs['date'] if 'date' in kwargs else None
         self.desc = kwargs['desc'] if 'desc' in kwargs else None
-        self.amount = kwargs['amount'] if 'src' in kwargs else None
+        self.amount = kwargs['amount'] if 'amount' in kwargs else None
         self.dst = kwargs['dst'] if 'dst' in kwargs else None
         self.src = kwargs['src'] if 'src' in kwargs else None
 
