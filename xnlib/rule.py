@@ -1,3 +1,6 @@
+import re
+
+
 class Condition(object):
     """A rule condition.
 
@@ -18,24 +21,34 @@ class OperatorCondition(Condition):
         super(OperatorCondition, self).__init__(*args, **kwargs)
 
 
-class SourceCondition(Condition):
+class AccountCondition(Condition):
+    def __init__(self, *args, **kwargs):
+        """
+        Any '::' expands to 1+ intermediate fragments.
+        No ':' at start anchors fragment at beginning.
+        No ':' at end anchors fragment at end.
+        """
+        super(AccountCondition, self).__init__(*args, **kwargs)
+        pattern = self.value.replace('::', ':[\w ]+(?::[\w ]+)*:')
+        if pattern[0] != ':':
+            pattern = '^' + pattern
+        if pattern[-1] != ':':
+            pattern = pattern + '$'
+        self.re = re.compile(pattern)
+
+
+class SourceCondition(AccountCondition):
     def match(self, xn):
         if xn.src is None:
             return False
-        return filter(
-            lambda src: src.account.startswith(self.value),
-            xn.src
-        )
+        return filter(lambda src: self.re.search(src.account), xn.src)
 
 
-class DestinationCondition(Condition):
+class DestinationCondition(AccountCondition):
     def match(self, xn):
         if xn.dst is None:
             return False
-        return filter(
-            lambda dst: dst.account.startswith(self.value),
-            xn.dst
-        )
+        return filter(lambda dst: self.re.search(dst.account), xn.dst)
 
 
 class DescriptionCondition(Condition):
