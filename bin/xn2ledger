@@ -48,12 +48,12 @@ rules = list(xnlib.util.flatten(map(xnlib.parse.file2rules, args.rules)))
 xns = xnlib.readers.StGeorge.Reader(file=args.infile, account=args.account)
 xns = list(xns)
 
-# create ui
-ui = xnlib.ui.UI()
+# create user interface object
+uio = xnlib.ui.UI()
 
 # process transactions
 for xn in xns:
-    xn.process(rules, ui=ui)
+    xn.process(rules, uio)
 
 goodxns = []
 for xn in xns:
