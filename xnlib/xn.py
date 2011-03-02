@@ -1,5 +1,17 @@
+import sys
+
 from . import rule
 from . import score
+from . import ui
+
+
+thresold = {
+    'y':  8000,
+    'y?': 6000,
+    '?':  4000,
+    'n?': 2000,
+    'n':  0,
+}
 
 
 class XnDataError(Exception):
@@ -109,47 +121,102 @@ class Xn(object):
 
         return scores
 
-    def apply_outcomes(self, outcomes, ui=None):
+    def apply_outcomes(self, outcomes, uio):
         """Apply the given outcomes to this rule.
 
         If user intervention is required, outcomes are not applied
         unless an xnlib.ui.UI is supplied.
         """
 
-        # source outcomes
-        if 'src' in outcomes and not self.src:
-            highest = outcomes['src'].highest()
-            if highest:
-                highscore = score.score(highest[0])
-                if len(highest) == 1:
-                    if score.score(highest[0]) > 0:  # TODO threshold
-                        self.src = [
-                            Endpoint(score.value(highest[0]), -self.amount)
-                        ]
-                    else:
-                        pass  # TODO UI confirm accept
-            else:
-                pass  # TODO UI provide options
+        # account outcomes
+        for outcome in ['src', 'dst']:
+            if outcome not in outcomes or getattr(self, outcome):
+                # no outcome, or the attribute was already set
+                continue
 
-        # destination outcomes
-        if 'dst' in outcomes and not self.dst:
-            highest = outcomes['dst'].highest()
-            if highest:
-                highscore = score.score(highest[0])
-                if len(highest) == 1:
-                    if score.score(highest[0]) > 0:  # TODO threshold
-                        self.dst = [
-                            Endpoint(score.value(highest[0]), self.amount)
-                        ]
+            endpoints = []
+            highest = outcomes[outcome].highest()
+            try:
+                if highest:
+                    highscore = score.score(highest[0])
+                    if len(highest) == 1:
+                        if highscore >= thresold['y']:
+                            # do it
+                            endpoints = [
+                                Endpoint(score.value(highest[0]), self.amount)
+                            ]
+                        else:
+                            uio.show('Choose ' + outcome  + ' for account:')
+                            uio.show('')
+                            uio.show(repr(self))
+                            uio.show('')
+
+                            prompt = 'Is the account {0}?'.format(score.value(highest[0]))
+                            if highscore >= thresold['y?']:
+                                default = True
+                            elif highscore >= thresold['?']:
+                                default = None
+                            else:
+                                default = False
+                            if uio.yn(prompt, default):
+                                endpoints = [
+                                    Endpoint(
+                                        score.value(highest[0]),
+                                        self.amount
+                                    )
+                                ]
+                            else:
+                                raise ui.RejectWarning('top score declined')
                     else:
-                        pass  # TODO UI confirm accept
-            else:
-                pass  # TODO UI provide options
+                        # tied highest score, let user pick
+                        uio.show('Choose ' + outcome  + 'for account:')
+                        uio.show('')
+                        uio.show(repr(self))
+                        uio.show('')
+
+                        prompt = 'Choose an account'
+                        uio.choose(prompt, map(score.value, highest))
+                else:
+                    # no highest score
+                    raise ui.RejectWarning('no scores')
+
+            except ui.RejectWarning:
+                # user has rejected our offer(s)
+                uio.show("\n")
+                uio.show('Please enter source transactions and amounts:')
+                try:
+                    endpoints = []
+                    remaining = self.amount
+                    while remaining:
+                        account = uio.text(
+                            ' Enter account',
+                            score.value(highest[0]) if highest else None
+                        )
+                        amount = uio.decimal(
+                            ' Enter amount',
+                            default=remaining,
+                            lower=0,
+                            upper=remaining
+                        )
+                        endpoints.append(Endpoint(account, amount))
+                        remaining = self.amount \
+                            - sum(map(lambda x: x.amount, endpoints))
+                except ui.RejectWarning:
+                    # bail out
+                    sys.exit("bye!")
+
+            # flip amounts if it was a src outcome
+            if outcome == 'src':
+                endpoints = map(
+                    lambda x: Endpoint(x.account, -x.amount),
+                    endpoints
+                )
+
+            # set endpoints
+            setattr(self, outcome, endpoints)
 
         # TODO desc outcomes
 
-    def process(self, rules, ui=None):
+    def process(self, rules, uio):
         """Matches rules and applies outcomes"""
-        outcomes = self.match_rules(rules)
-        self.apply_outcomes(outcomes, ui=ui)
-        #self.apply_outcomes(self.match_rules(rules), ui=ui)
+        self.apply_outcomes(self.match_rules(rules), uio)
