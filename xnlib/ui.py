@@ -1,5 +1,6 @@
 from __future__ import division
 
+import decimal
 import functools
 import math
 
@@ -55,6 +56,23 @@ def filter_int(string, default=None, start=None, stop=None):
             raise InvalidInputError
 
 
+def filter_decimal(string, default=None, lower=None, upper=None):
+    """Return the input decimal number, or the default."""
+    try:
+        d = decimal.Decimal(string)
+        if lower is not None and d < lower:
+            raise InvalidInputError("value too small")
+        if upper is not None and d >= upper:
+            raise InvalidInputError("value too large")
+        return d
+    except decimal.InvalidOperation:
+        if not string and default is not None:
+            # empty string, default was given
+            return default
+        else:
+            raise InvalidInputError("invalid decimal number")
+
+
 def filter_text(string, default=None):
     if string:
         return string
@@ -83,7 +101,18 @@ class UI(object):
 
     def text(self, prompt, default=None):
         """Prompts the user for some text, with optional default"""
+        prompt = prompt if prompt is not None else 'Enter some text'
+        prompt += " [{0}]: ".format(default) if default is not None else ': '
         return self.input(partial(filter_text, default=default), prompt)
+
+    def decimal(self, prompt, default=None, lower=None, upper=None):
+        """Prompts user to input decimal, with optional default and bounds."""
+        prompt = prompt if prompt is not None else "Enter a decimal number"
+        prompt += " [{0}]: ".format(default) if default is not None else ': '
+        return self.input(
+            partial(filter_decimal, default=default, lower=lower, upper=upper),
+            prompt
+        )
 
     def yn(self, prompt, default=None):
         """Prompts the user for yes/no confirmation, with optional default"""
@@ -96,17 +125,19 @@ class UI(object):
         prompt += opts
         return self.input(partial(filter_yn, default=default), prompt)
 
-    def choose(self, items, default=None):
+    def choose(self, prompt, items, default=None):
         """Prompts the user to choose one item from a list.
 
         The default, if provided, is an index; the item of that index will
         be returned.
         """
         if default is not None and (default >= len(items) or default < 0):
-            raise IndexError  # TODO raise a more sensible exception
+            raise IndexError
+        prompt = prompt if prompt is not None else "Choose from following:"
+        self.show(prompt + '\n')
         self.show("\n".join(number(items)))  # show the items
         prompt = "Enter number of chosen item"
-        prompt += " [{0:d}]: ".format(default) if default is not None else ': '
+        prompt += " [{0}]: ".format(default) if default is not None else ': '
         return items[self.input(
             partial(filter_int, default=default, start=0, stop=len(items)),
             prompt
