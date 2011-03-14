@@ -48,7 +48,7 @@ class Xn(object):
     def __repr__(self):
         return "xnlib.xn.Xn(\n" + '\n'.join(map(
             lambda x: '    {0}: {1}'.format(repr(x), repr(getattr(self, x))),
-            ['date', 'desc', 'amount', 'dst', 'src']
+            ['date', 'desc', 'amount', 'src', 'dst']
         )) + ')\n'
 
     def __str__(self):
@@ -146,12 +146,13 @@ class Xn(object):
                                 Endpoint(score.value(highest[0]), self.amount)
                             ]
                         else:
-                            uio.show('Choose ' + outcome  + ' for account:')
+                            uio.show('Choose ' + outcome + ' for transaction:')
                             uio.show('')
                             uio.show(repr(self))
-                            uio.show('')
 
-                            prompt = 'Is the account {0}?'.format(score.value(highest[0]))
+                            prompt = 'Is the account {0}?'.format(
+                                score.value(highest[0])
+                            )
                             if highscore >= thresold['y?']:
                                 default = True
                             elif highscore >= thresold['?']:
@@ -169,13 +170,17 @@ class Xn(object):
                                 raise ui.RejectWarning('top score declined')
                     else:
                         # tied highest score, let user pick
-                        uio.show('Choose ' + outcome  + 'for account:')
+                        uio.show('Choose ' + outcome + ' for transaction:')
                         uio.show('')
                         uio.show(repr(self))
-                        uio.show('')
 
                         prompt = 'Choose an account'
-                        uio.choose(prompt, map(score.value, highest))
+                        endpoints = [
+                            Endpoint(
+                                uio.choose(prompt, map(score.value, highest)),
+                                self.amount
+                            )
+                        ]
                 else:
                     # no highest score
                     raise ui.RejectWarning('no scores')
@@ -183,11 +188,12 @@ class Xn(object):
             except ui.RejectWarning:
                 # user has rejected our offer(s)
                 uio.show("\n")
-                uio.show('Please enter source transactions and amounts:')
+                uio.show('Enter ' + outcome + ' endpoints:')
                 try:
                     endpoints = []
                     remaining = self.amount
                     while remaining:
+                        uio.show('\n${0} remaining'.format(remaining))
                         account = uio.text(
                             ' Enter account',
                             score.value(highest[0]) if highest else None
@@ -216,6 +222,43 @@ class Xn(object):
             setattr(self, outcome, endpoints)
 
         # TODO desc outcomes
+
+    def complete(self, uio):
+        """Query for all missing information in the transaction"""
+        for end in ['src', 'dst']:
+            if getattr(self, end):
+                continue  # we have this information
+
+            uio.show('\nEnter ' + end + ' for transaction:')
+            uio.show('')
+            uio.show(repr(self))
+            try:
+                endpoints = []
+                remaining = self.amount
+                while remaining:
+                    account = uio.text(' Enter account', None)
+                    amount = uio.decimal(
+                        ' Enter amount',
+                        default=remaining,
+                        lower=0,
+                        upper=remaining
+                    )
+                    endpoints.append(Endpoint(account, amount))
+                    remaining = self.amount \
+                        - sum(map(lambda x: x.amount, endpoints))
+            except ui.RejectWarning:
+                # bail out
+                sys.exit("bye!")
+
+            # flip amounts if it was a src outcome
+            if end == 'src':
+                endpoints = map(
+                    lambda x: Endpoint(x.account, -x.amount),
+                    endpoints
+                )
+
+            # set endpoints
+            setattr(self, end, endpoints)
 
     def process(self, rules, uio):
         """Matches rules and applies outcomes"""
