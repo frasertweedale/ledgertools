@@ -14,6 +14,9 @@ class Condition(object):
     def match(self, xn):
         raise NotImplementedError  # subclasses must implement
 
+    def __repr__(self):
+        return "{}(value={!r})".format(self.__class__.__name__, self.value)
+
 
 class OperatorCondition(Condition):
     def __init__(self, *args, **kwargs):
@@ -82,6 +85,11 @@ class Outcome(object):
         self.value = kwargs.pop('value')
         self.score = kwargs.pop('score')
         super(Outcome, self).__init__(*args, **kwargs)
+
+
+class DropOutcome(Outcome):
+    def __init__(self, *args, **kwargs):
+        super(DropOutcome, self).__init__(*args, value=None, **kwargs)
 
 
 class SourceOutcome(Outcome):

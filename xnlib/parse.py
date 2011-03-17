@@ -29,6 +29,11 @@ class TypeState(object):
         return functools.partial(self.cls, value=self.cast(words.pop(0)))
 
 
+class NoneState(TypeState):
+    def eatwords(self, words):
+        return self.cls
+
+
 class AccountState(TypeState):
     def cast(self, value):
         return value  # TODO cast to valid account
@@ -82,6 +87,7 @@ class OutcomeState(object):
         'from': AccountState(rule.SourceOutcome),
         'to': AccountState(rule.DestinationOutcome),
         'desc': DescriptionState(rule.DescriptionOutcome),
+        'drop': NoneState(rule.DropOutcome),
     }
 
     def eatwords(self, words):
@@ -99,7 +105,10 @@ def line2rule(line):
             acc.append(parser.eatwords(words))
         return rule.Rule(*acc)
     except:
-        print "error on line: '" + line + "' at '" + words[0]
+        if words:
+            print "error on line: '" + line + "' at '" + words[0]
+        else:
+            print "error on line: '" + line
         raise
 
 

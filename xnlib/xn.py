@@ -5,7 +5,7 @@ from . import score
 from . import ui
 
 
-thresold = {
+threshold = {
     'y':  8000,
     'y?': 6000,
     '?':  4000,
@@ -39,6 +39,7 @@ class Endpoint(object):
 class Xn(object):
     def __init__(self, **kwargs):
         """Initialise the transaction object"""
+        self.dropped = kwargs['dropped'] if 'dropped' in kwargs else False
         self.date = kwargs['date'] if 'date' in kwargs else None
         self.desc = kwargs['desc'] if 'desc' in kwargs else None
         self.amount = kwargs['amount'] if 'amount' in kwargs else None
@@ -48,7 +49,7 @@ class Xn(object):
     def __repr__(self):
         return "xnlib.xn.Xn(\n" + '\n'.join(map(
             lambda x: '    {0}: {1}'.format(repr(x), repr(getattr(self, x))),
-            ['date', 'desc', 'amount', 'src', 'dst']
+            ['date', 'desc', 'amount', 'src', 'dst', 'dropped']
         )) + ')\n'
 
     def __str__(self):
@@ -113,6 +114,8 @@ class Xn(object):
                     key = 'dst'
                 elif isinstance(outcome, rule.DescriptionOutcome):
                     key = 'desc'
+                elif isinstance(outcome, rule.DropOutcome):
+                    key = 'drop'
                 else:
                     raise KeyError
                 if key not in scores:
@@ -121,12 +124,40 @@ class Xn(object):
 
         return scores
 
-    def apply_outcomes(self, outcomes, uio):
+    def apply_outcomes(self, outcomes, uio, dropped=False):
         """Apply the given outcomes to this rule.
 
         If user intervention is required, outcomes are not applied
         unless an xnlib.ui.UI is supplied.
         """
+        if self.dropped and not dropped:
+            # do nothing for dropped xn, unless specifically told to
+            return
+
+        if 'drop' in outcomes:
+            highscore = score.score(outcomes['drop'].highest()[0])
+            if highscore >= threshold['y']:
+                # drop without prompting
+                self.dropped = True
+            elif highscore < threshold['n?']:
+                # do NOT drop, and don't even ask
+                pass
+            else:
+                if highscore >= threshold['y?']:
+                    default = True
+                elif highscore >= threshold['?']:
+                    default = None
+                else:
+                    default = False
+                try:
+                    self.dropped = uio.yn('Drop this transaction?', default)
+                except ui.RejectWarning:
+                    # we assume they mean "no"
+                    pass
+
+        if self.dropped and not dropped:
+            # do nothing further for dropped xn, unless specifically told to
+            return
 
         # account outcomes
         for outcome in ['src', 'dst']:
@@ -137,53 +168,49 @@ class Xn(object):
             endpoints = []
             highest = outcomes[outcome].highest()
             try:
-                if highest:
-                    highscore = score.score(highest[0])
-                    if len(highest) == 1:
-                        if highscore >= thresold['y']:
-                            # do it
-                            endpoints = [
-                                Endpoint(score.value(highest[0]), self.amount)
-                            ]
-                        else:
-                            uio.show('Choose ' + outcome + ' for transaction:')
-                            uio.show('')
-                            uio.show(repr(self))
-
-                            prompt = 'Is the account {0}?'.format(
-                                score.value(highest[0])
-                            )
-                            if highscore >= thresold['y?']:
-                                default = True
-                            elif highscore >= thresold['?']:
-                                default = None
-                            else:
-                                default = False
-                            if uio.yn(prompt, default):
-                                endpoints = [
-                                    Endpoint(
-                                        score.value(highest[0]),
-                                        self.amount
-                                    )
-                                ]
-                            else:
-                                raise ui.RejectWarning('top score declined')
+                highscore = score.score(highest[0])
+                if len(highest) == 1:
+                    if highscore >= threshold['y']:
+                        # do it
+                        endpoints = [
+                            Endpoint(score.value(highest[0]), self.amount)
+                        ]
                     else:
-                        # tied highest score, let user pick
                         uio.show('Choose ' + outcome + ' for transaction:')
                         uio.show('')
                         uio.show(repr(self))
 
-                        prompt = 'Choose an account'
-                        endpoints = [
-                            Endpoint(
-                                uio.choose(prompt, map(score.value, highest)),
-                                self.amount
-                            )
-                        ]
+                        prompt = 'Is the account {0}?'.format(
+                            score.value(highest[0])
+                        )
+                        if highscore >= threshold['y?']:
+                            default = True
+                        elif highscore >= threshold['?']:
+                            default = None
+                        else:
+                            default = False
+                        if uio.yn(prompt, default):
+                            endpoints = [
+                                Endpoint(
+                                    score.value(highest[0]),
+                                    self.amount
+                                )
+                            ]
+                        else:
+                            raise ui.RejectWarning('top score declined')
                 else:
-                    # no highest score
-                    raise ui.RejectWarning('no scores')
+                    # tied highest score, let user pick
+                    uio.show('Choose ' + outcome + ' for transaction:')
+                    uio.show('')
+                    uio.show(repr(self))
+
+                    prompt = 'Choose an account'
+                    endpoints = [
+                        Endpoint(
+                            uio.choose(prompt, map(score.value, highest)),
+                            self.amount
+                        )
+                    ]
 
             except ui.RejectWarning:
                 # user has rejected our offer(s)
@@ -223,8 +250,12 @@ class Xn(object):
 
         # TODO desc outcomes
 
-    def complete(self, uio):
+    def complete(self, uio, dropped=False):
         """Query for all missing information in the transaction"""
+        if self.dropped and not dropped:
+            # do nothing for dropped xn, unless specifically told to
+            return
+
         for end in ['src', 'dst']:
             if getattr(self, end):
                 continue  # we have this information
