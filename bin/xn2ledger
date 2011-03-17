@@ -54,15 +54,9 @@ uio = xnlib.ui.UI()
 # process transactions
 for xn in xns:
     xn.process(rules, uio)
-
-goodxns = []
-for xn in xns:
-    try:
-        xn.balance()
-        goodxns.append(xn)
-    except xnlib.xn.XnDataError:
-        pass
+    xn.complete(uio)
+    xn.balance()
 
 # print transactions
-for xn in goodxns:
+for xn in xns:
     print >> args.outfile, xn
