@@ -55,8 +55,9 @@ uio = xnlib.ui.UI()
 for xn in xns:
     xn.process(rules, uio)
     xn.complete(uio)
-    xn.balance()
+    if not xn.dropped:
+        xn.balance()
 
 # print transactions
-for xn in xns:
+for xn in filter(lambda x: not x.dropped, xns):
     print >> args.outfile, xn
