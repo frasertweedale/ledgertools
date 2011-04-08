@@ -60,4 +60,4 @@ for xn in xns:
 
 # print transactions
 for xn in filter(lambda x: not x.dropped, xns):
-    print >> args.outfile, xn
+    print >> args.outfile, xn.ledger()

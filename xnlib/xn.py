@@ -50,6 +50,9 @@ class Xn(object):
         )) + ')\n'
 
     def __str__(self):
+        return self.summary()
+
+    def ledger(self):
         """Convert to a Ledger transaction (no trailing blank line)"""
         self.balance()  # make sure the transaction balances
 
@@ -60,6 +63,24 @@ class Xn(object):
         for dst in self.dst:
             s += "  {0.account}  ${0.amount}\n".format(dst)
         return s
+
+    def summary(self):
+        """Return a string summary of transaction"""
+        return "\n".join([
+            "Transaction:",
+            "  When:        " + self.date.strftime("%a %d %b %Y"),
+            "  Description: " + self.desc,
+            "  For amount:  {}".format(self.amount),
+            "  From:        {}".format(
+                ", ".join(map(lambda x: x.account, self.src)) if self.src \
+                    else "UNKNOWN"
+            ),
+            "  To:          {}".format(
+                ", ".join(map(lambda x: x.account, self.dst)) if self.dst \
+                    else "UNKNOWN"
+            ),
+            ""
+        ])
 
     def check(self):
         """Check this transaction for completeness"""
@@ -178,7 +199,7 @@ class Xn(object):
                     else:
                         uio.show('Choose ' + outcome + ' for transaction:')
                         uio.show('')
-                        uio.show(repr(self))
+                        uio.show(self.summary())
 
                         prompt = 'Is the account {0}?'.format(
                             score.value(highest[0])
@@ -202,7 +223,7 @@ class Xn(object):
                     # tied highest score, let user pick
                     uio.show('Choose ' + outcome + ' for transaction:')
                     uio.show('')
-                    uio.show(repr(self))
+                    uio.show(self.summary())
 
                     prompt = 'Choose an account'
                     endpoints = [
@@ -262,7 +283,7 @@ class Xn(object):
 
             uio.show('\nEnter ' + end + ' for transaction:')
             uio.show('')
-            uio.show(repr(self))
+            uio.show(self.summary())
             try:
                 endpoints = []
                 remaining = self.amount
