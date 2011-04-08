@@ -143,6 +143,9 @@ class Xn(object):
                 # do NOT drop, and don't even ask
                 pass
             else:
+                uio.show('DROP was determined for transaction:')
+                uio.show('')
+                uio.show(self.summary())
                 if highscore >= threshold['y?']:
                     default = True
                 elif highscore >= threshold['?']:
@@ -150,7 +153,7 @@ class Xn(object):
                 else:
                     default = False
                 try:
-                    self.dropped = uio.yn('Drop this transaction?', default)
+                    self.dropped = uio.yn('DROP this transaction?', default)
                 except ui.RejectWarning:
                     # we assume they mean "no"
                     pass
