@@ -30,10 +30,7 @@ class Endpoint(object):
         self.amount = amount
 
     def __repr__(self):
-        return 'Endpoint({0}, {1})'.format(
-            repr(self.account),
-            repr(self.amount)
-        )
+        return 'Endpoint({!r}, {!r})'.format(self.account, self.amount)
 
 
 class Xn(object):
@@ -48,7 +45,7 @@ class Xn(object):
 
     def __repr__(self):
         return "xnlib.xn.Xn(\n" + '\n'.join(map(
-            lambda x: '    {0}: {1}'.format(repr(x), repr(getattr(self, x))),
+            lambda x: '    {!r}: {!r}'.format(x, getattr(self, x)),
             ['date', 'desc', 'amount', 'src', 'dst', 'dropped']
         )) + ')\n'
 
