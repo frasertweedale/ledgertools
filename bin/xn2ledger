@@ -1,14 +1,12 @@
 #!/usr/bin/env python
 
-from __future__ import division
-
 import argparse
-import sys
 
 import xnlib.parse
 import xnlib.readers.StGeorge
 import xnlib.ui
 import xnlib.util
+
 
 parser = argparse.ArgumentParser(
     description="Convert transactions to Ledger format"
