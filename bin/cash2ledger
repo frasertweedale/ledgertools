@@ -1,0 +1,69 @@
+#!/usr/bin/env python
+
+import argparse
+import datetime
+import sys
+
+import xnlib.ui
+import xnlib.xn
+
+
+# parse args
+
+parser = argparse.ArgumentParser(
+    description="Ask for details of cash transaction and write to ledger"
+);
+parser.add_argument(
+    '--out',
+    dest='outfile',
+    type=argparse.FileType('a'),
+    required=True,  # TODO work it out from config (as default)
+    help="the Ledger transaction output file (will be appended to)"
+)
+args = parser.parse_args()
+
+# get a user interface
+uio = xnlib.ui.UI()
+
+try:
+    # ask the date
+    xn_dict = {
+        'date': uio.pastdate("Enter date", datetime.date.today()),
+        'desc': uio.text("Enter description"),
+        'src': [xnlib.xn.Endpoint(
+            uio.account("Enter source account", "Expenses:Cash"),
+            -uio.decimal("Enter transaction amount")
+        )],
+        'dst': []
+    }
+    xn_dict['amount'] = -xn_dict['src'][0].amount
+
+    # ask the destination endpoint(s)
+    uio.show('\n')
+    uio.show('Enter destination endpoints:')
+    remaining = xn_dict['amount']
+    while remaining:
+        uio.show('\n${} remaining'.format(remaining))
+        account = uio.account(' Enter account')
+        amount = uio.decimal(
+            ' Enter amount',
+            default=remaining,
+            lower=0,
+            upper=remaining
+        )
+        xn_dict['dst'].append(xnlib.xn.Endpoint(account, amount))
+        #remaining -= amount
+        remaining = xn_dict['amount'] - sum(map(lambda x: x.amount, xn_dict['dst']))
+
+    # write transaction to ledger
+    xn = xnlib.xn.Xn(**xn_dict)
+    uio.show('')
+    uio.show(xn.summary())
+    print >> args.outfile, xn.ledger()
+    uio.show('Wrote ledger.')
+
+except xnlib.ui.RejectWarning:
+    # bail out
+    uio.show('')
+    uio.show('BAIL OUT')
+    sys.exit(1)
