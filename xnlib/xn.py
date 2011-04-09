@@ -57,7 +57,11 @@ class Xn(object):
         self.balance()  # make sure the transaction balances
 
         s = "{0}/{1:02}/{2:02}  {3}\n".format(
-            self.date.year, self.date.month, self.date.day, self.desc)
+            self.date.year,
+            self.date.month,
+            self.date.day,
+            self.desc.replace('\n', ' ')
+        )
         for src in self.src:
             s += "  {0.account}  ${0.amount}\n".format(src)
         for dst in self.dst:
@@ -69,7 +73,7 @@ class Xn(object):
         return "\n".join([
             "Transaction:",
             "  When:        " + self.date.strftime("%a %d %b %Y"),
-            "  Description: " + self.desc,
+            "  Description: " + self.desc.replace('\n', ' '),
             "  For amount:  {}".format(self.amount),
             "  From:        {}".format(
                 ", ".join(map(lambda x: x.account, self.src)) if self.src \
