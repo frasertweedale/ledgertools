@@ -1,8 +1,10 @@
 from __future__ import division
 
+import datetime
 import decimal
 import functools
 import math
+import re
 
 partial = functools.partial
 
@@ -82,6 +84,55 @@ def filter_text(string, default=None):
         raise InvalidInputError
 
 
+def filter_pastdate(string, default=None):
+    """Coerce to a date not beyond the current date
+
+    If only a day is given, assumes the current month if that day has
+    passed or is the current day, otherwise assumes the previous month.
+    If a day and month are given, but no year, assumes the current year
+    if the given date has passed (or is today), otherwise the previous
+    year.
+    """
+    if not string and default is not None:
+        return default
+
+    today = datetime.date.today()
+
+    # split the string
+    try:
+        parts = map(int, re.split('\D+', string))  # split the string
+    except ValueError:
+        raise InvalidInputError("invalid date; use format: DD [MM [YYYY]]")
+
+    if len(parts) < 1 or len(parts) > 3:
+        raise InvalidInputError("invalid date; use format: DD [MM [YYYY]]")
+
+    if len(parts) == 1:
+        # no month or year given; append month
+        parts.append(today.month - 1 if parts[0] > today.day else today.month)
+        if parts[1] < 1:
+            parts[1] = 12
+
+    if len(parts) == 2:
+        # no year given; append year
+        if parts[1] > today.month \
+          or parts[1] == today.month and parts[0] > today.day:
+            parts.append(today.year - 1)
+        else:
+            parts.append(today.year)
+
+    parts.reverse()
+
+    try:
+        date = datetime.date(*parts)
+        if date > today:
+            raise InvalidInputError("cannot choose a date in the future")
+        return date
+    except ValueError:
+        print parts
+        raise InvalidInputError("invalid date; use format: DD [MM [YYYY]]")
+
+
 class UI(object):
     def show(self, msg):
         print msg
@@ -94,8 +145,9 @@ class UI(object):
         while True:
             try:
                 return filter_fn(raw_input(prompt))
-            except InvalidInputError:
-                pass  # do nothing (prompt again)
+            except InvalidInputError as e:
+                if e.message:
+                    self.show('ERROR: ' + e.message)
             except KeyboardInterrupt:
                 raise RejectWarning
 
@@ -121,6 +173,14 @@ class UI(object):
             partial(filter_decimal, default=default, lower=lower, upper=upper),
             prompt
         )
+
+    def pastdate(self, prompt, default=None):
+        """Prompts user to input a date in the past."""
+        prompt = prompt if prompt is not None else "Enter a past date"
+        if default is not None:
+            prompt += " [" + default.strftime('%d %m %Y') + "]"
+        prompt += ': '
+        return self.input(partial(filter_pastdate, default=default), prompt)
 
     def yn(self, prompt, default=None):
         """Prompts the user for yes/no confirmation, with optional default"""
