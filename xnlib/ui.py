@@ -105,6 +105,14 @@ class UI(object):
         prompt += " [{0}]: ".format(default) if default is not None else ': '
         return self.input(partial(filter_text, default=default), prompt)
 
+    def account(self, prompt, default=None):
+        """Prompts the user for an account, with optional default
+
+        TODO: for now, this just wraps text, but conformity to account name
+              style should be checked
+        """
+        return self.text(prompt, default)
+
     def decimal(self, prompt, default=None, lower=None, upper=None):
         """Prompts user to input decimal, with optional default and bounds."""
         prompt = prompt if prompt is not None else "Enter a decimal number"
