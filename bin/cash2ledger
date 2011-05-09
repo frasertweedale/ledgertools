@@ -4,6 +4,7 @@ import argparse
 import datetime
 import sys
 
+import xnlib.config
 import xnlib.ui
 import xnlib.xn
 
@@ -12,18 +13,29 @@ import xnlib.xn
 
 parser = argparse.ArgumentParser(
     description="Ask for details of cash transaction and write to ledger"
-);
+)
+parser.add_argument(
+    '--account',
+    default='Expenses:Cash',
+    help="the account to which the given transactions pertain"
+)
 parser.add_argument(
     '--out',
     dest='outfile',
     type=argparse.FileType('a'),
-    required=True,  # TODO work it out from config (as default)
     help="the Ledger transaction output file (will be appended to)"
 )
 args = parser.parse_args()
 
 # get a user interface
 uio = xnlib.ui.UI()
+
+# we must have an outfile or an outpat
+if not args.outfile:
+    outpat = xnlib.config.outpat(args.account)
+    if not outpat:
+        uio.show('BAIL OUT: No outfile or outpat provided')
+        sys.exit(1)
 
 try:
     # ask the date
@@ -52,14 +64,17 @@ try:
             upper=remaining
         )
         xn_dict['dst'].append(xnlib.xn.Endpoint(account, amount))
-        #remaining -= amount
         remaining = xn_dict['amount'] - sum(map(lambda x: x.amount, xn_dict['dst']))
 
     # write transaction to ledger
     xn = xnlib.xn.Xn(**xn_dict)
     uio.show('')
     uio.show(xn.summary())
-    print >> args.outfile, xn.ledger()
+    if args.outfile:
+        print >> args.outfile, xn.ledger()
+    else:
+        with open(xnlib.config.format_outpat(outpat, xn), 'a') as f:
+            print >> f, xn.ledger()
     uio.show('Wrote ledger.')
 
 except xnlib.ui.RejectWarning:
