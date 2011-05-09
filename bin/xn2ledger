@@ -2,8 +2,9 @@
 
 import argparse
 
+import xnlib.config
 import xnlib.parse
-import xnlib.readers.StGeorge
+import xnlib.readers
 import xnlib.ui
 import xnlib.util
 
@@ -21,9 +22,12 @@ parser.add_argument(
 parser.add_argument(
     '--out',
     dest='outfile',
-    type=argparse.FileType('w'),
-    required=True,
-    help="the Ledger transaction output file (will clobber existing)"
+    type=argparse.FileType('a'),
+    help="the Ledger transaction output file (transactions are appended)"
+)
+parser.add_argument(
+    '--reader',
+    help='specify or override the reader to use'
 )
 parser.add_argument(
     '--account',
@@ -35,15 +39,31 @@ parser.add_argument(
     type=argparse.FileType('r'),
     action='append',
     default=[],
-    help='specify a rules file to read'
+    help='specify additional rules files to read'
 )
 args = parser.parse_args()
 
+# make sure we have an outfile or outpat
+if not args.outfile:
+    outpat = xnlib.config.outpat(args.account)
+    if not outpat:
+        uio.show('BAIL OUT: No outfile or outpat provided')
+        sys.exit(1)
+
 # read rules files
-rules = list(xnlib.util.flatten(map(xnlib.parse.file2rules, args.rules)))
+#
+# first get rulefiles from config
+rules = xnlib.util.flatten(map(
+    xnlib.parse.file2rules,
+    args.rules + map(open, xnlib.config.rulefiles(args.account))
+))
 
 # read transactions
-xns = xnlib.readers.StGeorge.Reader(file=args.infile, account=args.account)
+readerclass = args.reader or xnlib.config.reader(args.account)
+xns = getattr(xnlib.readers, readerclass).Reader(
+    file=args.infile,
+    account=args.account
+)
 xns = list(xns)
 
 # create user interface object
@@ -58,4 +78,8 @@ for xn in xns:
 
 # print transactions
 for xn in filter(lambda x: not x.dropped, xns):
-    print >> args.outfile, xn.ledger()
+    if args.outfile:
+        print >> args.outfile, xn.ledger()
+    else:
+        with open(xnlib.config.format_outpat(outpat, xn), 'a') as f:
+            print >> f, xn.ledger()
