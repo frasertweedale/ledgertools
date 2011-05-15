@@ -57,6 +57,7 @@ rules = xnlib.util.flatten(map(
     xnlib.parse.file2rules,
     args.rules + map(open, xnlib.config.rulefiles(args.account))
 ))
+rules = list(rules)
 
 # read transactions
 readerclass = args.reader or xnlib.config.reader(args.account)
