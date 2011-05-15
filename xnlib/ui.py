@@ -5,8 +5,9 @@ import decimal
 import functools
 import math
 import re
+import sys
 
-partial = functools.partial
+curry = functools.partial
 
 
 class InvalidInputError(Exception):
@@ -137,6 +138,12 @@ class UI(object):
     def show(self, msg):
         print msg
 
+    def bail(self, msg=None):
+        """Exit uncleanly with an optional message"""
+        if msg:
+            self.show('BAIL OUT: ' + msg)
+        sys.exit(1)
+
     def input(self, filter_fn, prompt):
         """Prompt user until valid input is received.
 
@@ -155,7 +162,7 @@ class UI(object):
         """Prompts the user for some text, with optional default"""
         prompt = prompt if prompt is not None else 'Enter some text'
         prompt += " [{0}]: ".format(default) if default is not None else ': '
-        return self.input(partial(filter_text, default=default), prompt)
+        return self.input(curry(filter_text, default=default), prompt)
 
     def account(self, prompt, default=None):
         """Prompts the user for an account, with optional default
@@ -170,7 +177,7 @@ class UI(object):
         prompt = prompt if prompt is not None else "Enter a decimal number"
         prompt += " [{0}]: ".format(default) if default is not None else ': '
         return self.input(
-            partial(filter_decimal, default=default, lower=lower, upper=upper),
+            curry(filter_decimal, default=default, lower=lower, upper=upper),
             prompt
         )
 
@@ -180,7 +187,7 @@ class UI(object):
         if default is not None:
             prompt += " [" + default.strftime('%d %m %Y') + "]"
         prompt += ': '
-        return self.input(partial(filter_pastdate, default=default), prompt)
+        return self.input(curry(filter_pastdate, default=default), prompt)
 
     def yn(self, prompt, default=None):
         """Prompts the user for yes/no confirmation, with optional default"""
@@ -191,7 +198,7 @@ class UI(object):
         else:
             opts = " [y/n]: "
         prompt += opts
-        return self.input(partial(filter_yn, default=default), prompt)
+        return self.input(curry(filter_yn, default=default), prompt)
 
     def choose(self, prompt, items, default=None):
         """Prompts the user to choose one item from a list.
@@ -207,6 +214,6 @@ class UI(object):
         prompt = "Enter number of chosen item"
         prompt += " [{0}]: ".format(default) if default is not None else ': '
         return items[self.input(
-            partial(filter_int, default=default, start=0, stop=len(items)),
+            curry(filter_int, default=default, start=0, stop=len(items)),
             prompt
         )]
