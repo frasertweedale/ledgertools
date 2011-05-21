@@ -1,0 +1,33 @@
+{
+	"rootdir": "~/doc/fin",
+	"outdir": "ledger",
+	"rulesdir": "rules",
+
+	"rules": [ "common_rules" ],
+
+	"accounts": {
+		"Assets:Bank:SomeBank:ProductA": {
+			"reader": "csv",
+			"rules": [ "ProductA_rules" ],
+			"outpat": "{date.year}_{date.month:02}_SomeBank_A.dat"
+		},
+		"Assets:Bank:SomeBank:ProductB": {
+			"reader": "csv",
+			"rules": [ "ProductB_rules" ],
+			"outpat": "{date.year}_{date.month:02}SomeBank_B.dat"
+		},
+		"Assets:Bank:OtherBank:Product": {
+			"reader": "csv",
+			"rules": [ "OtherBank_rules" ],
+			"outpat": "{date.year}_{date.month:02}_OtherBank.dat"
+		},
+		"Liabilities:SomeBank:CreditCardType": {
+			"reader": "csv",
+			"rules": [ "SomeBankCredit_rules" ],
+			"outpat": "{date.year}_{date.month:02}_SomeBank_Credit.dat"
+		},
+		"Expenses:Cash": {
+			"outpat": "{date.year}_{date.month:02}_CASH.dat"
+		}
+	}
+}
