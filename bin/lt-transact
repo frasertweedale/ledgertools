@@ -4,9 +4,9 @@ import argparse
 import datetime
 import sys
 
-import xnlib.config
-import xnlib.ui
-import xnlib.xn
+import ltlib.config
+import ltlib.ui
+import ltlib.xn
 
 
 # parse args
@@ -28,11 +28,11 @@ parser.add_argument(
 args = parser.parse_args()
 
 # get a user interface
-uio = xnlib.ui.UI()
+uio = ltlib.ui.UI()
 
 # we must have an outfile or an outpat
 if not args.outfile:
-    outpat = xnlib.config.outpat(args.account)
+    outpat = ltlib.config.outpat(args.account)
     if not outpat:
         uio.show('BAIL OUT: No outfile or outpat provided')
         sys.exit(1)
@@ -42,7 +42,7 @@ try:
     xn_dict = {
         'date': uio.pastdate("Enter date", datetime.date.today()),
         'desc': uio.text("Enter description"),
-        'src': [xnlib.xn.Endpoint(
+        'src': [ltlib.xn.Endpoint(
             uio.account("Enter source account", "Expenses:Cash"),
             -uio.decimal("Enter transaction amount")
         )],
@@ -63,21 +63,21 @@ try:
             lower=0,
             upper=remaining
         )
-        xn_dict['dst'].append(xnlib.xn.Endpoint(account, amount))
+        xn_dict['dst'].append(ltlib.xn.Endpoint(account, amount))
         remaining = xn_dict['amount'] - sum(map(lambda x: x.amount, xn_dict['dst']))
 
     # write transaction to ledger
-    xn = xnlib.xn.Xn(**xn_dict)
+    xn = ltlib.xn.Xn(**xn_dict)
     uio.show('')
     uio.show(xn.summary())
     if args.outfile:
         print >> args.outfile, xn.ledger()
     else:
-        with open(xnlib.config.format_outpat(outpat, xn), 'a') as f:
+        with open(ltlib.config.format_outpat(outpat, xn), 'a') as f:
             print >> f, xn.ledger()
     uio.show('Wrote ledger.')
 
-except xnlib.ui.RejectWarning:
+except ltlib.ui.RejectWarning:
     # bail out
     uio.show('')
     uio.show('BAIL OUT')

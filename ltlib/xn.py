@@ -44,7 +44,7 @@ class Xn(object):
         self.src = kwargs['src'] if 'src' in kwargs else None
 
     def __repr__(self):
-        return "xnlib.xn.Xn(\n" + '\n'.join(map(
+        return "Xn(\n" + '\n'.join(map(
             lambda x: '    {!r}: {!r}'.format(x, getattr(self, x)),
             ['date', 'desc', 'amount', 'src', 'dst', 'dropped']
         )) + ')\n'
@@ -150,7 +150,7 @@ class Xn(object):
         """Apply the given outcomes to this rule.
 
         If user intervention is required, outcomes are not applied
-        unless an xnlib.ui.UI is supplied.
+        unless a ui.UI is supplied.
         """
         if self.dropped and not dropped:
             # do nothing for dropped xn, unless specifically told to

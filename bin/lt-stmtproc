@@ -2,11 +2,11 @@
 
 import argparse
 
-import xnlib.config
-import xnlib.parse
-import xnlib.readers
-import xnlib.ui
-import xnlib.util
+import ltlib.config
+import ltlib.parse
+import ltlib.readers
+import ltlib.ui
+import ltlib.util
 
 
 parser = argparse.ArgumentParser(
@@ -44,26 +44,26 @@ parser.add_argument(
 args = parser.parse_args()
 
 # create user interface object
-uio = xnlib.ui.UI()
+uio = ltlib.ui.UI()
 
 # make sure we have an outfile or outpat
 if not args.outfile:
-    outpat = xnlib.config.outpat(args.account)
+    outpat = ltlib.config.outpat(args.account)
     if not outpat:
         uio.bail('No outfile or output pattern provied')
 
 # read rules files
 #
 # first get rulefiles from config
-rules = xnlib.util.flatten(map(
-    xnlib.parse.file2rules,
-    args.rules + map(open, xnlib.config.rulefiles(args.account))
+rules = ltlib.util.flatten(map(
+    ltlib.parse.file2rules,
+    args.rules + map(open, ltlib.config.rulefiles(args.account))
 ))
 rules = list(rules)
 
 # read transactions
-readerclass = args.reader or xnlib.config.reader(args.account)
-xns = getattr(xnlib.readers, readerclass).Reader(
+readerclass = args.reader or ltlib.config.reader(args.account)
+xns = getattr(ltlib.readers, readerclass).Reader(
     file=args.infile,
     account=args.account
 )
@@ -81,5 +81,5 @@ for xn in filter(lambda x: not x.dropped, xns):
     if args.outfile:
         print >> args.outfile, xn.ledger()
     else:
-        with open(xnlib.config.format_outpat(outpat, xn), 'a') as f:
+        with open(ltlib.config.format_outpat(outpat, xn), 'a') as f:
             print >> f, xn.ledger()
