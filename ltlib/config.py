@@ -136,4 +136,18 @@ def reader(acc):
             return None
 
 
+def readerargs(acc):
+    """Return the reader args for the given account.
+
+    If no reader args are specified, returns an empty dict.
+    """
+    try:
+        return config['accounts'][acc]['readerargs']
+    except KeyError:
+        try:
+            return config['readerargs']
+        except KeyError:
+            return {}
+
+
 read_config()

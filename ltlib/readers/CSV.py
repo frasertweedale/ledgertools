@@ -32,7 +32,9 @@ class Reader(reader.Reader):
     This reader expects the field names to be provided as the first line
     of the file (TODO: make configurable).
 
-    The file must provide "Date", "Description", "Debit" and "Credit" fields.
+    The file must provide the "Date" and "Description" fields, and either
+    an "Amount" field (which contains a positive or negative value)  or
+    both "Debit" and "Credit" fields (which only contain positive values).
     The heuristic for interpreting the "Date" field is described in the
     parse_date() documentation.
 
@@ -43,16 +45,20 @@ class Reader(reader.Reader):
     "Credit" field is used.
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, fieldnames=None, **kwargs):
         """
         Takes an account argument which indicates the account that was
         transacted upon.
+
+        The fieldnames argument, if supplied, is passed to the underlying
+        csv.DictReader object, and is required if the first line of the
+        CSV file does not specify the field names.
         """
         if 'account' not in kwargs:
             raise reader.DataError('Required account field was not provided')
         self.account = kwargs.pop('account')
         super(Reader, self).__init__(**kwargs)
-        self.csvreader = csv.DictReader(self.file)
+        self.csvreader = csv.DictReader(self.file, fieldnames=fieldnames)
 
     def next(self):
         """Return the next transaction object.
@@ -114,15 +120,22 @@ class Reader(reader.Reader):
         xn_dict['desc'] = fields['Description']
 
         # amount
-        if fields['Credit'] and fields['Debit']:
-            # this doesn't seem right...
-            raise reader.DataError('Credit and Debit field present; dubious.')
-        xn_dict['amount'] = \
-            decimal.Decimal(fields['Credit'] or fields['Debit'])
-
-        if fields['Credit']:
-            xn_dict['dst'] = [xn.Endpoint(self.account, xn_dict['amount'])]
+        if 'Amount' in fields:
+            amount = decimal.Decimal(fields['Amount'])
+            xn_dict['amount'] = abs(amount)
+            if amount > 0:
+                xn_dict['dst'] = [xn.Endpoint(self.account, amount)]  # credit
+            else:
+                xn_dict['src'] = [xn.Endpoint(self.account, amount)]  # debit
         else:
-            xn_dict['src'] = [xn.Endpoint(self.account, -xn_dict['amount'])]
+            if fields['Credit'] and fields['Debit']:
+                # this doesn't seem right...
+                raise reader.DataError('Credit and Debit field used; dubious.')
+            amount = decimal.Decimal(fields['Credit'] or fields['Debit'])
+            xn_dict['amount'] = amount
+            if fields['Credit']:
+                xn_dict['dst'] = [xn.Endpoint(self.account, amount)]  # credit
+            else:
+                xn_dict['src'] = [xn.Endpoint(self.account, -amount)]  # debit
 
         return xn.Xn(**xn_dict)

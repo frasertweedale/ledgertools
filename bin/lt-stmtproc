@@ -79,9 +79,11 @@ rules = list(rules)
 
 # read transactions
 readerclass = args.reader or ltlib.config.reader(args.account)
+readerargs = ltlib.config.readerargs(args.account)
 xns = getattr(ltlib.readers, readerclass).Reader(
     file=args.infile,
-    account=args.account
+    account=args.account,
+    **readerargs
 )
 xns = list(xns)
 
