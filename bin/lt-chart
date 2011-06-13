@@ -1,0 +1,80 @@
+#!/usr/bin/env python
+
+# lt-chart - chart statistics from a Ledger database
+# Copyright (C) 2011 Fraser Tweedale
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# TODO: date ranges, amount-vs-time charts, proper GUI
+
+import argparse
+import glob
+import subprocess
+
+import gtk
+import gtkchartlib.ringchart
+
+import ltlib.balance
+import ltlib.chart
+import ltlib.config
+import ltlib.util
+
+
+parser = argparse.ArgumentParser(
+    description="Chart statistics from a Ledger database"
+);
+parser.add_argument(
+    '--account',
+    action='append',
+    required=True,
+    help="Load transactions from these accounts' Ledger files."
+)
+parser.add_argument(
+    '--filter',
+    action='append',
+    help="Filter transactions by account slug."
+)
+args = parser.parse_args()
+
+win = gtk.Window()
+win.connect('delete-event', gtk.main_quit)
+win.set_size_request(384, 384)
+
+# Ledger files for specified account(s)
+files = ltlib.util.flatten(map(
+    lambda x: glob.glob(x + '/*'),
+    map(ltlib.config.outdir, args.account)
+))
+
+# run ledger
+cat = subprocess.Popen(['cat'] + list(files), stdout=subprocess.PIPE)
+ledger = subprocess.Popen(
+    ['ledger', '-f', '-', '-s', 'balance'] + (args.filter or []),
+    stdin=cat.stdout,
+    stdout=subprocess.PIPE
+)
+balance = ltlib.balance.balance(ledger.communicate()[0])
+
+# create ringchart
+rcis = ltlib.chart.balance_to_ringchart_items(
+    balance,
+    show=ltlib.chart.SHOW_CREDIT
+)
+rc = gtkchartlib.ringchart.RingChart(rcis)
+event_box = gtk.EventBox()
+event_box.add(rc)
+win.add(event_box)
+
+win.show_all()
+gtk.main()
