@@ -1,33 +1,33 @@
 {
 	"rootdir": "~/doc/fin",
-	"outdir": "ledger",
+	"outpat": "{date.year}_{date.month:02}.dat",
 	"rulesdir": "rules",
 
 	"rules": [ "common_rules" ],
 
 	"accounts": {
 		"Assets:Bank:SomeBank:ProductA": {
-			"reader": "csv",
+			"reader": "CSV",
 			"rules": [ "ProductA_rules" ],
-			"outpat": "{date.year}_{date.month:02}_SomeBank_A.dat"
+			"outdir": "ledger/SomeBank_ProductA"
 		},
 		"Assets:Bank:SomeBank:ProductB": {
-			"reader": "csv",
+			"reader": "CSV",
 			"rules": [ "ProductB_rules" ],
-			"outpat": "{date.year}_{date.month:02}SomeBank_B.dat"
+			"outdir": "ledger/SomeBank_ProductB"
 		},
 		"Assets:Bank:OtherBank:Product": {
-			"reader": "csv",
+			"reader": "CSV",
 			"rules": [ "OtherBank_rules" ],
-			"outpat": "{date.year}_{date.month:02}_OtherBank.dat"
+			"outdir": "ledger/OtherBank_Product"
 		},
 		"Liabilities:SomeBank:CreditCardType": {
-			"reader": "csv",
+			"reader": "CSV",
 			"rules": [ "SomeBankCredit_rules" ],
-			"outpat": "{date.year}_{date.month:02}_SomeBank_Credit.dat"
+			"outdir": "ledger/SomeBank_CC"
 		},
 		"Expenses:Cash": {
-			"outpat": "{date.year}_{date.month:02}_CASH.dat"
+			"outdir": "ledger/Cash"
 		}
 	}
 }
