@@ -4,8 +4,6 @@ Ledger account system utilities
 Provides some utility programs for working with and visualising data in
 the Ledger_ accounting system.
 
-.. _Ledger: https://github.com/jwiegley/ledger
-
 ``lt-transact``
   Create new transactions and write to a Ledger database.
 
@@ -14,3 +12,8 @@ the Ledger_ accounting system.
 
 ``lt-chart``
   Visualise income or expenditure as a multi-level pie chart.
+  Requires Ledger_, PyGTK_ and pygtkchart_.
+
+.. _Ledger: https://github.com/jwiegley/ledger
+.. _PyGTK: http://www.pygtk.org/
+.. _pygtkchart: http://pypi.python.org/pypi/pygtkchart
