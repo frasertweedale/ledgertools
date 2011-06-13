@@ -1,8 +1,8 @@
 Ledger account system utilities
 -------------------------------
 
-Provides some utility programs for working with the Ledger_ accounting
-system.
+Provides some utility programs for working with and visualising data in
+the Ledger_ accounting system.
 
 .. _Ledger: https://github.com/jwiegley/ledger
 
@@ -11,3 +11,6 @@ system.
 
 ``lt-stmtproc``
   Convert a bank statement into transactions in a Ledger database.
+
+``lt-chart``
+  Visualise income or expenditure as a multi-level pie chart.
