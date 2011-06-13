@@ -10,7 +10,7 @@ setup(
     author='Fraser Tweedale',
     author_email='frase@frase.id.au',
     url='http://frase.id.au/repo/ledgertools.git',
-    packages=['ltlib', 'ltlib.readers', 'ltlib.test'],
+    packages=['ltlib', 'ltlib.readers'],
     scripts=['bin/lt-stmtproc', 'bin/lt-transact', 'bin/lt-chart'],
     data_files=[
         ('doc/ledgertools', ['doc/.ltconfig.sample']),
