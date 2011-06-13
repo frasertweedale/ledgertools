@@ -45,6 +45,12 @@ parser.add_argument(
     action='append',
     help="Filter transactions by account slug."
 )
+parser.add_argument(
+    '--show',
+    default='credit',
+    choices=['all', 'credit', 'debit'],
+    help="Show accounts in credit, debit, or all accounts."
+)
 args = parser.parse_args()
 
 win = gtk.Window()
@@ -67,9 +73,14 @@ ledger = subprocess.Popen(
 balance = ltlib.balance.balance(ledger.communicate()[0])
 
 # create ringchart
+show = {
+    'all': ltlib.chart.SHOW_ALL,
+    'credit': ltlib.chart.SHOW_CREDIT,
+    'debit': ltlib.chart.SHOW_DEBIT,
+}
 rcis = ltlib.chart.balance_to_ringchart_items(
     balance,
-    show=ltlib.chart.SHOW_CREDIT
+    show=show[args.show]
 )
 rc = gtkchartlib.ringchart.RingChart(rcis)
 event_box = gtk.EventBox()
