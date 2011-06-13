@@ -5,7 +5,7 @@ with open('README') as file:
 
 setup(
     name='ledgertools',
-    version='0.1',
+    version='0.2',
     description='Ledger accounting system utilities',
     author='Fraser Tweedale',
     author_email='frase@frase.id.au',
@@ -18,6 +18,7 @@ setup(
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Environment :: Console',
+        'Environment :: X11 Applications :: GTK',
         'Intended Audience :: End Users/Desktop',
         'Intended Audience :: Financial and Insurance Industry',
         'License :: OSI Approved :: GNU General Public License (GPL)',
