@@ -5,11 +5,11 @@ with open('README') as file:
 
 setup(
     name='ledgertools',
-    version='0.2',
+    version='0.2.1',
     description='Ledger accounting system utilities',
     author='Fraser Tweedale',
     author_email='frase@frase.id.au',
-    url='http://frase.id.au/repo/ledgertools.git',
+    url='https://gitorious.org/ledgertools',
     packages=['ltlib', 'ltlib.readers'],
     scripts=['bin/lt-stmtproc', 'bin/lt-transact', 'bin/lt-chart'],
     data_files=[

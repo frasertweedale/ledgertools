@@ -12,8 +12,8 @@ the Ledger_ accounting system.
 
 ``lt-chart``
   Visualise income or expenditure as a multi-level pie chart.
-  Requires Ledger_, PyGTK_ and pygtkchart_.
+  Requires Ledger_, PyGTK_ (2.12 or higher) and gtkchartlib_.
 
 .. _Ledger: https://github.com/jwiegley/ledger
 .. _PyGTK: http://www.pygtk.org/
-.. _pygtkchart: http://pypi.python.org/pypi/pygtkchart
+.. _gtkchartlib: http://pypi.python.org/pypi/gtkchartlib
