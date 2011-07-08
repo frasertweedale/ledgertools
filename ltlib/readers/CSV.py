@@ -131,7 +131,7 @@ class Reader(reader.Reader):
             if fields['Credit'] and fields['Debit']:
                 # this doesn't seem right...
                 raise reader.DataError('Credit and Debit field used; dubious.')
-            amount = decimal.Decimal(fields['Credit'] or fields['Debit'])
+            amount = abs(decimal.Decimal(fields['Credit'] or fields['Debit']))
             xn_dict['amount'] = amount
             if fields['Credit']:
                 xn_dict['dst'] = [xn.Endpoint(self.account, amount)]  # credit
