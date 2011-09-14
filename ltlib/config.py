@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import json
-import os.path
+import os
 
 config = None
 
@@ -31,12 +31,19 @@ def read_config():
         config = json.load(fp)
 
 
+def path_normaliser(func):
+    """Decorator that normalises the return value of ``func``."""
+    return lambda *args, **kwargs: os.path.normpath(func(*args, **kwargs))
+
+
+@path_normaliser
 def rootdir():
     if 'rootdir' not in config:
         return None
     return os.path.expanduser(config['rootdir'])
 
 
+@path_normaliser
 def outdir(acc):
     """
     Determine the outdir for the given account.
