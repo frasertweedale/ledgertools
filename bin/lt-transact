@@ -22,6 +22,7 @@ import sys
 
 import ltlib.config
 import ltlib.ui
+import ltlib.util
 import ltlib.xn
 
 
@@ -48,6 +49,7 @@ uio = ltlib.ui.UI()
 
 # we must have an outfile or an outpat
 if not args.outfile:
+    ltlib.util.prepare_outdir(args.account)
     outpat = ltlib.config.outpat(args.account)
     if not outpat:
         uio.show('BAIL OUT: No outfile or outpat provided')

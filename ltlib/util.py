@@ -15,6 +15,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import collections
+import os
+
+from . import config
 
 
 def flatten(xs):
@@ -25,3 +28,9 @@ def flatten(xs):
                 yield y
         else:
             yield x
+
+
+def prepare_outdir(acc):
+    outdir = config.outdir(acc)
+    if not os.path.exists(outdir):
+        os.makedirs(outdir)

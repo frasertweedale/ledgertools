@@ -64,6 +64,7 @@ uio = ltlib.ui.UI()
 
 # make sure we have an outfile or outpat
 if not args.outfile:
+    ltlib.util.prepare_outdir(args.account)
     outpat = ltlib.config.outpat(args.account)
     if not outpat:
         uio.bail('No outfile or output pattern provied')
