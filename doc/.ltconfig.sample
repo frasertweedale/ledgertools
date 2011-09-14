@@ -5,6 +5,8 @@
 
 	"rules": [ "common_rules" ],
 
+    "transact-default-account": "Expenses:Cash",
+
 	"accounts": {
 		"Assets:Bank:SomeBank:ProductA": {
 			"reader": "CSV",
@@ -18,6 +20,9 @@
 		},
 		"Assets:Bank:OtherBank:Product": {
 			"reader": "CSV",
+			"readerargs": {
+				"fieldnames": ["Date", "Amount", "Description", "Balance"]
+			},
 			"rules": [ "OtherBank_rules" ],
 			"outdir": "ledger/OtherBank_Product"
 		},
@@ -27,7 +32,19 @@
 			"outdir": "ledger/SomeBank_CC"
 		},
 		"Expenses:Cash": {
-			"outdir": "ledger/Cash"
+			"outdir": "ledger/Cash",
+            "transact-default-src": "Expenses:Cash"
+		},
+        "Special": {
+			"outdir": "ledger/Special",
+            "outpat": "special.dat",
+            "transact-default-dst": "SpecialExpenses"
 		}
+	},
+
+	"graph": {
+		"accounts": [
+			"Assets:Bank:SomeBank:ProductA"
+		]
 	}
 }
