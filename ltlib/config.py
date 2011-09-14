@@ -127,13 +127,7 @@ def rulefiles(acc):
 
 def reader(acc):
     """Return the reader for the given account, or None if none specified."""
-    try:
-        return config['accounts'][acc]['reader']
-    except KeyError:
-        try:
-            return config['reader']
-        except KeyError:
-            return None
+    return get('reader', acc)
 
 
 def readerargs(acc):
@@ -141,13 +135,22 @@ def readerargs(acc):
 
     If no reader args are specified, returns an empty dict.
     """
-    try:
-        return config['accounts'][acc]['readerargs']
-    except KeyError:
-        try:
-            return config['readerargs']
-        except KeyError:
-            return {}
+    return get('readerargs', acc, {})
+
+
+def get(name, acc=None, default=None):
+    """Return the named config for the given account.
+
+    If an account is given, first checks the account space for the name.
+    If no account given, or if the name not found in the account space,
+    look for the name in the global config space.  If still not found,
+    return the default, if given, otherwise ``None``.
+    """
+    if acc in config['accounts'] and name in config['accounts'][acc]:
+        return config['accounts'][acc][name]
+    if name in config:
+        return config[name]
+    return default
 
 
 read_config()
