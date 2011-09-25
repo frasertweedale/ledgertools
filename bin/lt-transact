@@ -55,7 +55,8 @@ if not args.outfile:
         uio.show('BAIL OUT: No outfile or outpat provided')
         sys.exit(1)
 
-try:
+
+def enter_transaction():
     # ask the date
     default_src = ltlib.config.get('transact-default-src', args.account)
     xn_dict = {
@@ -97,6 +98,11 @@ try:
             print >> f, xn.ledger()
     uio.show('Wrote ledger.')
 
+try:
+    keep_going = True
+    while keep_going:
+        enter_transaction()
+        keep_going = uio.yn('Enter another transaction?')
 except ltlib.ui.RejectWarning:
     # bail out
     uio.show('')
