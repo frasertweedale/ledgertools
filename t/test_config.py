@@ -150,6 +150,7 @@ class MockXn(object):
 
 class FormatOutpatTestCase(unittest.TestCase):
     outpat = '{date.year}_{date.month:02}_{date.day:02}.dat'
+
     def test_format_outpat(self):
         xn = MockXn(datetime.date(2011, 2, 3))
         self.assertEqual(
