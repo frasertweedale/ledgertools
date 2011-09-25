@@ -81,7 +81,7 @@ class Config(object):
         return self.get('rootdir')
 
     @apply(os.path.normpath)
-    def outdir(self, acc):
+    def outdir(self, acc=None):
         """Return the outdir for the given account.
 
         Attempts to create the directory if it does not exist.
@@ -104,14 +104,14 @@ class Config(object):
         return os.path.join(outdir, outpat) if outdir and outpat else None
 
     @apply(os.path.normpath)
-    def rulesdir(self, acc):
+    def rulesdir(self, acc=None):
         """
         Determine the rulesdir for the given account.
 
         Return None if not specified.
         """
         rootdir = self.rootdir()
-        rulesdir = self.get('rulesdir', acc=acc)
+        rulesdir = self.get('rulesdir', acc=acc, default=[])
         return os.path.join(rootdir, rulesdir) \
             if rootdir and rulesdir else None
 
