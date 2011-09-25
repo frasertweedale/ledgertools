@@ -1,5 +1,6 @@
 import unittest
 
+import datetime
 import os
 
 import ltlib.config
@@ -139,4 +140,19 @@ class ConfigTestCase(unittest.TestCase):
                 os.path.expanduser('~/ledger/rules/' + x)
                 for x in ['General.rules', 'AccountB/AccountB.rules']
             ))
+        )
+
+
+class MockXn(object):
+    def __init__(self, date):
+        self.date = date
+
+
+class FormatOutpatTestCase(unittest.TestCase):
+    outpat = '{date.year}_{date.month:02}_{date.day:02}.dat'
+    def test_format_outpat(self):
+        xn = MockXn(datetime.date(2011, 2, 3))
+        self.assertEqual(
+            ltlib.config.format_outpat(self.outpat, xn),
+            '2011_02_03.dat'
         )
