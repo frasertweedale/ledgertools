@@ -16,6 +16,7 @@
 
 import json
 import os
+import StringIO
 
 
 def apply(filter):
@@ -40,25 +41,25 @@ def format_outpat(outpat, xn):
 
 
 class Config(object):
-    @property
-    def data(self):
-        if not self._data:
-            if not os.path.isfile(_path):
-                # file doesn't exist; empty config
-                self._data = {}
-            else:
-                with open(_path) as fh:
-                    self._data = json.load(fh)
-        return data
-
-    def __init__(self, path='~/.ltconfig'):
+    def __init__(self, path='~/.ltconfig', text=None):
         """Initialise a Config object.
 
         ``path``
           The path to the config file.  Defaults to ``'~/.ltconfig'``.
           User expansion is performed on the value.
+        ``text``
+          JSON string that will be used for configuration.  If supplied,
+          takes precedence over ``path``.
         """
-        self._path = os.path.expanduser(path)
+        if text is None:
+            path = os.path.expanduser(path)
+            if os.path.isfile(path):
+                with open(path) as fh:
+                    self.data = json.load(fh)
+            else:
+                self.data = {}  # file doesn't exist; empty config
+        else:
+            self.data = json.load(StringIO.StringIO(text))
 
     def get(self, name, acc=None, default=None):
         """Return the named config for the given account.
