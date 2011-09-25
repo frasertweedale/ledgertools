@@ -62,10 +62,12 @@ args = parser.parse_args()
 # create user interface object
 uio = ltlib.ui.UI()
 
+# create a config object
+config = ltlib.config.Config()
+
 # make sure we have an outfile or outpat
 if not args.outfile:
-    ltlib.util.prepare_outdir(args.account)
-    outpat = ltlib.config.outpat(args.account)
+    outpat = config.outpat(args.account)
     if not outpat:
         uio.bail('No outfile or output pattern provied')
 
@@ -74,18 +76,19 @@ if not args.outfile:
 # first get rulefiles from config
 rules = ltlib.util.flatten(map(
     ltlib.parse.file2rules,
-    args.rules + map(open, ltlib.config.rulefiles(args.account))
+    args.rules + map(open, config.rulefiles(args.account))
 ))
 rules = list(rules)
 
 # read transactions
-readerclass = args.reader or ltlib.config.reader(args.account)
-readerargs = ltlib.config.readerargs(args.account)
+readerclass = args.reader or config.get('reader', acc=args.account)
+readerargs = config.get('readerargs', acc=args.account, default={})
 xns = getattr(ltlib.readers, readerclass).Reader(
     file=args.infile,
     account=args.account,
     **readerargs
 )
+# TODO catch AttributeError for unknown reader
 xns = list(xns)
 
 # process transactions

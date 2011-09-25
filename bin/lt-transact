@@ -47,17 +47,19 @@ args = parser.parse_args()
 # get a user interface
 uio = ltlib.ui.UI()
 
+# create a config object
+config = ltlib.config.Config()
+
 # we must have an outfile or an outpat
 if not args.outfile:
-    ltlib.util.prepare_outdir(args.account)
-    outpat = ltlib.config.outpat(args.account)
+    outpat = config.outpat(args.account)
     if not outpat:
         uio.show('BAIL OUT: No outfile or outpat provided')
         sys.exit(1)
 
 try:
     # ask the date
-    default_src = ltlib.config.get('transact-default-src', args.account)
+    default_src = config.get('transact-default-src', args.account)
     xn_dict = {
         'date': uio.pastdate("Enter date", datetime.date.today()),
         'desc': uio.text("Enter description"),
@@ -73,7 +75,7 @@ try:
     uio.show('\n')
     uio.show('Enter destination endpoints:')
     remaining = xn_dict['amount']
-    default_dst = ltlib.config.get('transact-default-dst', args.account)
+    default_dst = config.get('transact-default-dst', args.account)
     while remaining:
         uio.show('\n${} remaining'.format(remaining))
         account = uio.account(' Enter account', default=default_dst)
