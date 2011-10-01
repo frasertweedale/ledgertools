@@ -1,0 +1,21 @@
+ledgertools-0.3 :: ???
+======================
+
+New features
+------------
+
+- ``lt-transact`` is now more configurable.  The global config
+  ``transact-default-account`` specifies the default account.
+  ``transact-default-src`` and ``transact-default-dst`` specify the
+  default source and destination accounts and can be set on a
+  per-account basis.
+- ``lt-transact`` now asks if the user would like to enter another
+  transaction before exiting.
+
+Bug fixes
+---------
+
+- Take the absolute value of the CSV "Debit" field in order to work
+  if these values happen to be negative.
+- Better config file handling (do not try to read config file during
+  import of ``ltlib.config``.
