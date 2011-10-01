@@ -26,14 +26,16 @@ import ltlib.util
 import ltlib.xn
 
 
-# parse args
+# create a config object
+config = ltlib.config.Config()
 
+# parse args
 parser = argparse.ArgumentParser(
     description="Ask for details of cash transaction and write to ledger"
 )
 parser.add_argument(
     '--account',
-    default=ltlib.config.get('transact-default-account'),
+    default=config.get('transact-default-account'),
     help="the account to which the given transactions pertain"
 )
 parser.add_argument(
@@ -46,9 +48,6 @@ args = parser.parse_args()
 
 # get a user interface
 uio = ltlib.ui.UI()
-
-# create a config object
-config = ltlib.config.Config()
 
 # we must have an outfile or an outpat
 if not args.outfile:
