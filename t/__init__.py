@@ -13,16 +13,3 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-import collections
-import os
-
-
-def flatten(xs):
-    for x in xs:
-        if isinstance(x, collections.Iterable) \
-            and not isinstance(x, basestring):
-            for y in flatten(x):
-                yield y
-        else:
-            yield x

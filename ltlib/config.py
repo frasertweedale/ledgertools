@@ -16,66 +16,18 @@
 
 import json
 import os
-
-config = None
-
-
-def read_config():
-    global config
-    f = os.path.expanduser('~/.ltconfig')
-    if not os.path.isfile(f):
-        # file doesn't exist; empty config
-        config = {}
-    else:
-        fp = open(f)
-        config = json.load(fp)
+import StringIO
 
 
-def path_normaliser(func):
-    """Decorator that normalises the return value of ``func``."""
-    return lambda *args, **kwargs: os.path.normpath(func(*args, **kwargs))
+def apply(filter):
+    """Manufacture decorator that filters return value with given function.
 
-
-@path_normaliser
-def rootdir():
-    if 'rootdir' not in config:
-        return None
-    return os.path.expanduser(config['rootdir'])
-
-
-@path_normaliser
-def outdir(acc):
+    ``filter``:
+      Callable that takes a single parameter.
     """
-    Determine the outdir for the given account.
-
-    Return None if not specified.
-    """
-    if not rootdir():
-        return None
-    try:
-        return os.path.join(rootdir(), config['accounts'][acc]['outdir'])
-    except KeyError:
-        try:
-            return os.path.join(rootdir(), config['outdir'])
-        except KeyError:
-            return None
-
-
-def outpat(acc):
-    """
-    Determine the full outfile pattern for the given account.
-
-    Return None if not specified.
-    """
-    if not outdir(acc):
-        return None
-    try:
-        return os.path.join(outdir(acc), config['accounts'][acc]['outpat'])
-    except KeyError:
-        try:
-            return os.path.join(outdir(acc), config['outpat'])
-        except KeyError:
-            return None
+    def decorator(callable):
+        return lambda *args, **kwargs: filter(callable(*args, **kwargs))
+    return decorator
 
 
 def format_outpat(outpat, xn):
@@ -88,76 +40,88 @@ def format_outpat(outpat, xn):
     return outpat.format(date=xn.date)
 
 
-def rulesdir(acc):
-    """
-    Determine the rulesdir for the given account.
+class Config(object):
+    def __init__(self, path='~/.ltconfig', text=None):
+        """Initialise a Config object.
 
-    Return None if not specified.
-    """
-    if not rootdir():
-        return None
-    try:
-        return os.path.join(rootdir(), config['accounts'][acc]['rulesdir'])
-    except KeyError:
-        try:
-            return os.path.join(rootdir(), config['rulesdir'])
-        except KeyError:
-            return None
+        ``path``
+          The path to the config file.  Defaults to ``'~/.ltconfig'``.
+          User expansion is performed on the value.
+        ``text``
+          JSON string that will be used for configuration.  If supplied,
+          takes precedence over ``path``.
+        """
+        if text is None:
+            path = os.path.expanduser(path)
+            if os.path.isfile(path):
+                with open(path) as fh:
+                    self.data = json.load(fh)
+            else:
+                self.data = {}  # file doesn't exist; empty config
+        else:
+            self.data = json.load(StringIO.StringIO(text))
 
+    def get(self, name, acc=None, default=None):
+        """Return the named config for the given account.
 
-def rulefiles(acc):
-    """
-    Return a list of rulefiles for the given account (or the common rulefiles
-    if None is given.
+        If an account is given, first checks the account space for the name.
+        If no account given, or if the name not found in the account space,
+        look for the name in the global config space.  If still not found,
+        return the default, if given, otherwise ``None``.
+        """
+        if acc in self.data['accounts'] and name in self.data['accounts'][acc]:
+            return self.data['accounts'][acc][name]
+        if name in self.data:
+            return self.data[name]
+        return default
 
-    Returns an empty list if none specified.
-    """
-    if acc is None:
-        # return the common rulesfiles
-        try:
-            d = rulesdir(None)
-            if d is None:
-                return None
-            return map(lambda x: os.path.join(d, x), config['rules'])
-        except KeyError:
-            return []
-    try:
-        d = rulesdir(acc)
-        rules = [] if d is None else map(
-            lambda x: os.path.join(d, x),
-            config['accounts'][acc]['rules']
-        )
-        return rulefiles(None) + rules
-    except KeyError:
-        return rulefiles(None)
+    @apply(os.path.normpath)
+    @apply(os.path.expanduser)
+    def rootdir(self):
+        return self.get('rootdir')
 
+    @apply(os.path.normpath)
+    def outdir(self, acc=None):
+        """Return the outdir for the given account.
 
-def reader(acc):
-    """Return the reader for the given account, or None if none specified."""
-    return get('reader', acc)
+        Attempts to create the directory if it does not exist.
+        """
+        rootdir = self.rootdir()
+        outdir = self.get('outdir', acc=acc)
+        dir = os.path.join(rootdir, outdir) if rootdir and outdir else None
+        if not os.path.exists(dir):
+            os.makedirs(dir)
+        return dir
 
+    def outpat(self, acc=None):
+        """
+        Determine the full outfile pattern for the given account.
 
-def readerargs(acc):
-    """Return the reader args for the given account.
+        Return None if not specified.
+        """
+        outdir = self.outdir(acc)
+        outpat = self.get('outpat', acc=acc)
+        return os.path.join(outdir, outpat) if outdir and outpat else None
 
-    If no reader args are specified, returns an empty dict.
-    """
-    return get('readerargs', acc, {})
+    @apply(os.path.normpath)
+    def rulesdir(self, acc=None):
+        """
+        Determine the rulesdir for the given account.
 
+        Return None if not specified.
+        """
+        rootdir = self.rootdir()
+        rulesdir = self.get('rulesdir', acc=acc, default=[])
+        return os.path.join(rootdir, rulesdir) \
+            if rootdir and rulesdir else None
 
-def get(name, acc=None, default=None):
-    """Return the named config for the given account.
+    def rulefiles(self, acc=None):
+        """Return a list of rulefiles for the given account.
 
-    If an account is given, first checks the account space for the name.
-    If no account given, or if the name not found in the account space,
-    look for the name in the global config space.  If still not found,
-    return the default, if given, otherwise ``None``.
-    """
-    if acc in config['accounts'] and name in config['accounts'][acc]:
-        return config['accounts'][acc][name]
-    if name in config:
-        return config[name]
-    return default
-
-
-read_config()
+        Returns an empty list if none specified.
+        """
+        rulesdir = self.rulesdir(acc)
+        rules = [os.path.join(rulesdir, x) for x in self.get('rules', acc, [])]
+        if acc is not None:
+            rules += self.rulefiles(acc=None)
+        return rules

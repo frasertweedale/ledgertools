@@ -53,6 +53,9 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
+# create a config object
+config = ltlib.config.Config()
+
 win = gtk.Window()
 win.connect('delete-event', gtk.main_quit)
 win.set_size_request(384, 384)
@@ -60,7 +63,7 @@ win.set_size_request(384, 384)
 # Ledger files for specified account(s)
 files = ltlib.util.flatten(map(
     lambda x: glob.glob(x + '/*'),
-    map(ltlib.config.outdir, args.account)
+    map(config.outdir, args.account)
 ))
 
 # run ledger
