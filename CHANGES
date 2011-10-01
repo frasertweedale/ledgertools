@@ -11,6 +11,8 @@ New features
   per-account basis.
 - ``lt-transact`` now asks if the user would like to enter another
   transaction before exiting.
+- ``lt-transact`` now prints the account it is working with before
+  beginning transaction entry.
 
 Bug fixes
 ---------

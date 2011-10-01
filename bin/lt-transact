@@ -48,6 +48,7 @@ args = parser.parse_args()
 
 # get a user interface
 uio = ltlib.ui.UI()
+uio.show('Entering transactions for account {}'.format(args.account))
 
 # we must have an outfile or an outpat
 if not args.outfile:
