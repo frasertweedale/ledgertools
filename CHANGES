@@ -1,4 +1,4 @@
-ledgertools-0.3 :: ???
+ledgertools-dev :: ???
 ======================
 
 New features
@@ -21,3 +21,40 @@ Bug fixes
   if these values happen to be negative.
 - Better config file handling (do not try to read config file during
   import of ``ltlib.config``.
+
+
+ledgertools-0.2.1 :: Sat Jun 25 2011
+====================================
+
+Bug fixes
+---------
+
+- Chase the pygtkchart -> gtkchartlib package name change in README.
+  No code changed.
+
+
+ledgertools-0.2 :: Mon Jun 13 2011
+==================================
+
+New features
+------------
+
+- Introducing ``lt-chart``: a program for visualising expenditure as a
+  hierarchical pie chart.
+- New ``readerargs`` config can be used to supply arguments to the
+  reader constructor.
+- CSV reader now accepts a ``fieldnames`` argument (via the
+  ``readerargs`` facility) which can be used to specify which
+  fields are present and in what order.  A single "amount" field
+  is now supported as an alternative to "credit" and "debit".
+
+
+ledgertools-0.1 :: Sat May 21 2011
+==================================
+
+Initial release
+---------------
+
+- ``lt-stmtproc``: process bank statements into a Ledger database, using
+  rules or prompting user to determine account.
+- ``lt-transact``: manually enter transactions into a Ledger database.
