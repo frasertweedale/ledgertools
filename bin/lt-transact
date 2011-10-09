@@ -21,6 +21,7 @@ import datetime
 import sys
 
 import ltlib.config
+import ltlib.parse
 import ltlib.ui
 import ltlib.util
 import ltlib.xn
@@ -31,18 +32,26 @@ config = ltlib.config.Config()
 
 # parse args
 parser = argparse.ArgumentParser(
-    description="Ask for details of cash transaction and write to ledger"
+    description='Manually enter transactions and write them to Ledger.'
 )
 parser.add_argument(
     '--account',
     default=config.get('transact-default-account'),
-    help="the account to which the given transactions pertain"
+    help='The account to which transactions to be entered pertain.'
 )
 parser.add_argument(
     '--out',
     dest='outfile',
     type=argparse.FileType('a'),
-    help="the Ledger transaction output file (will be appended to)"
+    help='The Ledger file to which to appended transactions.'
+)
+parser.add_argument(
+    '--rules',
+    type=argparse.FileType('r'),
+    action='append',
+    default=[],
+    metavar='RULEFILE',
+    help='An additional rule file to read (may be used multiple times).'
 )
 args = parser.parse_args()
 
@@ -57,9 +66,17 @@ if not args.outfile:
         uio.show('BAIL OUT: No outfile or outpat provided')
         sys.exit(1)
 
+# read rules files
+rule_generator = ltlib.util.flatten(map(
+    ltlib.parse.file2rules,
+    args.rules + map(open, config.rulefiles(args.account))
+))
+rules = list(rule_generator)
+
 
 def enter_transaction():
-    # ask the date
+    """Enter a transaction, using rules to determine values when possible."""
+    # ask the date, description, source account and amount
     default_src = config.get('transact-default-src', args.account)
     xn_dict = {
         'date': uio.pastdate("Enter date", datetime.date.today()),
@@ -72,25 +89,17 @@ def enter_transaction():
     }
     xn_dict['amount'] = -xn_dict['src'][0].amount
 
-    # ask the destination endpoint(s)
-    uio.show('\n')
-    uio.show('Enter destination endpoints:')
-    remaining = xn_dict['amount']
-    default_dst = config.get('transact-default-dst', args.account)
-    while remaining:
-        uio.show('\n${} remaining'.format(remaining))
-        account = uio.account(' Enter account', default=default_dst)
-        amount = uio.decimal(
-            ' Enter amount',
-            default=remaining,
-            lower=0,
-            upper=remaining
-        )
-        xn_dict['dst'].append(ltlib.xn.Endpoint(account, amount))
-        remaining = xn_dict['amount'] - sum(map(lambda x: x.amount, xn_dict['dst']))
+    # create a Xn instance
+    xn = ltlib.xn.Xn(**xn_dict)
+
+    # process the transaction against rules
+    xn.process(rules, uio)
+
+    # complete the transaction
+    xn.complete(uio)
+    xn.balance()
 
     # write transaction to ledger
-    xn = ltlib.xn.Xn(**xn_dict)
     uio.show('')
     uio.show(xn.summary())
     if args.outfile:

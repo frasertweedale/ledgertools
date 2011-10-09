@@ -9,6 +9,8 @@ New features
   ``transact-default-src`` and ``transact-default-dst`` specify the
   default source and destination accounts and can be set on a
   per-account basis.
+- ``lt-transact`` now reads rule files and processes transactions
+  against rulesets.
 - ``lt-transact`` now asks if the user would like to enter another
   transaction before exiting.
 - ``lt-transact`` now prints the account it is working with before
