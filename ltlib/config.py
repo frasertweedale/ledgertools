@@ -1,5 +1,5 @@
 # This file is part of ledgertools
-# Copyright (C) 2011 Fraser Tweedale
+# Copyright (C) 2011, 2012 Fraser Tweedale
 #
 # ledgertools is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -34,10 +34,30 @@ def format_outpat(outpat, xn):
     """
     Format an outpat for the given transaction.
 
-    Currently recognised fields are:
-    - date.<attr> where attr is a valid datetime.Date field
+    Format the given output filename pattern.  The pattern should
+    be a format string with any combination of the following named
+    fields:
+
+    ``year``
+      The year of the transaction.
+    ``month``
+      The month of the transaction, with leading zero for
+      single-digit months.
+    ``fy``
+      The financial year of the transaction (being the year in
+      which the financial year of the transaction *ends*).
+      A financial year runs from 1 July to 30 June.
+    ``date``
+      The date object itself.  The format string may specify
+      any attribute of the date object, e.g. ``{date.day}``.
+      This field is deprecated.
     """
-    return outpat.format(date=xn.date)
+    return outpat.format(
+        year=str(xn.date.year),
+        month='{:02}'.format(xn.date.month),
+        fy=str(xn.date.year if xn.date.month < 7 else xn.date.year + 1),
+        date=xn.date
+    )
 
 
 class Config(object):
