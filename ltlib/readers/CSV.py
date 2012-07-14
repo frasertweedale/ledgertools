@@ -26,6 +26,15 @@ from .. import xn
 date_delim = re.compile('-|/')
 
 
+class MetadataException(Exception):
+    """Exception to indicate metadata in the CSV file.
+
+    ``Reader.dict_to_xn`` raises this exception when it encounters
+    metadata in the CSV file; the exception can be caught and
+    ``next`` can advance to the next row in the file.
+    """
+
+
 class Reader(reader.Reader):
     """CSV statement reader.
 
@@ -65,7 +74,11 @@ class Reader(reader.Reader):
 
         StopIteration will be propagated from self.csvreader.next()
         """
-        return self.dict_to_xn(self.csvreader.next())
+        try:
+            return self.dict_to_xn(self.csvreader.next())
+        except MetadataException:
+            # row was metadata; proceed to next row
+            return next(self)
 
     def parse_date(self, date):
         """Parse the date and return a datetime object
@@ -131,6 +144,19 @@ class Reader(reader.Reader):
             if fields['Credit'] and fields['Debit']:
                 # this doesn't seem right...
                 raise reader.DataError('Credit and Debit field used; dubious.')
+            elif not fields['Credit'] and not fields['Debit']:
+                # neither field is supplied; is it metadata?
+                if re.match(
+                    r'\s*(?:open|clos)ing\s*balance\s*$',
+                    fields['Description'],
+                    flags=re.IGNORECASE
+                ):
+                    # yep, looks like metadata
+                    raise MetadataException
+                else:
+                    raise reader.DataError(
+                        'unable to process fields: {!r}'.format(fields)
+                    )
             amount = abs(decimal.Decimal(fields['Credit'] or fields['Debit']))
             xn_dict['amount'] = amount
             if fields['Credit']:

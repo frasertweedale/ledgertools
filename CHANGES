@@ -18,6 +18,9 @@ New features
 - Output patterns now offer the "year", "month" and "fy" (financial
   year) fields, in addition to "date".  These all return strings,
   and "month" will have a leading zero for single-digit months.
+- The CSV reader will now ignore non-transaction "metadata" in CSV
+  files, e.g. "Opening Balance" or "Closing Balance", instead of
+  crashing.
 
 Bug fixes
 ---------
