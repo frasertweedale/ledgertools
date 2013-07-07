@@ -1,6 +1,6 @@
 from distutils.core import setup
 
-with open('README') as file:
+with open('README.rst') as file:
     long_description = file.read()
 
 setup(
@@ -9,7 +9,7 @@ setup(
     description='Ledger accounting system utilities',
     author='Fraser Tweedale',
     author_email='frase@frase.id.au',
-    url='https://gitorious.org/ledgertools',
+    url='https://github.com/frasertweedale/ledgertools',
     packages=['ltlib', 'ltlib.readers'],
     scripts=['bin/lt-stmtproc', 'bin/lt-transact', 'bin/lt-chart'],
     data_files=[
@@ -21,8 +21,7 @@ setup(
         'Environment :: X11 Applications :: GTK',
         'Intended Audience :: End Users/Desktop',
         'Intended Audience :: Financial and Insurance Industry',
-        'License :: OSI Approved :: GNU General Public License (GPL)',
-        'Natural Language :: English',
+        'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
         'Operating System :: OS Independent',
         'Programming Language :: Python :: 2.7',
         'Topic :: Office/Business :: Financial :: Accounting',

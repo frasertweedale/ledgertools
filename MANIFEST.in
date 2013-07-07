@@ -1,1 +1,4 @@
+include CHANGES
 include COPYING
+include README.rst
+include MANIFEST.in
