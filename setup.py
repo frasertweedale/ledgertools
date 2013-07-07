@@ -5,7 +5,7 @@ with open('README.rst') as file:
 
 setup(
     name='ledgertools',
-    version='0.2.1',
+    version='0.3',
     description='Ledger accounting system utilities',
     author='Fraser Tweedale',
     author_email='frase@frase.id.au',
