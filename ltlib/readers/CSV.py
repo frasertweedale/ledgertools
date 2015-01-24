@@ -47,6 +47,11 @@ class Reader(reader.Reader):
     The heuristic for interpreting the "Date" field is described in the
     parse_date() documentation.
 
+    If the field names do not match those above, use the
+    ``fieldremap`` argument to supply a mapping of actual field
+    names keyed by the aforementioned expected field names.
+    Matching fields may be omitted from this mapping.
+
     Since the assumption is that all transactions in a CSV file pertain to a
     particular account, this account must be supplied to the constructor.
     For a given transaction, the "to" or "from" field of the transaction object
@@ -54,7 +59,7 @@ class Reader(reader.Reader):
     "Credit" field is used.
     """
 
-    def __init__(self, fieldnames=None, **kwargs):
+    def __init__(self, fieldnames=None, fieldremap=None, **kwargs):
         """
         Takes an account argument which indicates the account that was
         transacted upon.
@@ -68,6 +73,7 @@ class Reader(reader.Reader):
         self.account = kwargs.pop('account')
         super(Reader, self).__init__(**kwargs)
         self.csvreader = csv.DictReader(self.file, fieldnames=fieldnames)
+        self.remap = fieldremap
 
     def next(self):
         """Return the next transaction object.
@@ -115,6 +121,11 @@ class Reader(reader.Reader):
         except TypeError, ValueError:
             raise reader.DataError('Bad date format: "{}"'.format(date))
 
+    def _fieldname(self, k):
+        if self.remap is None:
+            return k
+        return self.remap.get(k, k)
+
     def dict_to_xn(self, fields):
         # normalise field names (strip whitespace)
         fields = dict(
@@ -127,28 +138,31 @@ class Reader(reader.Reader):
         xn_dict = {}  # dict that will be passed to Xn constructor
 
         # date
-        xn_dict['date'] = self.parse_date(fields['Date'])
+        xn_dict['date'] = self.parse_date(fields[self._fieldname('Date')])
 
         # description
-        xn_dict['desc'] = fields['Description']
+        xn_dict['desc'] = fields[self._fieldname('Description')]
 
         # amount
-        if 'Amount' in fields:
-            amount = decimal.Decimal(fields['Amount'])
+        fieldname_amount = self._fieldname('Amount')
+        if fieldname_amount in fields:
+            amount = decimal.Decimal(fields[fieldname_amount])
             xn_dict['amount'] = abs(amount)
             if amount > 0:
                 xn_dict['dst'] = [xn.Endpoint(self.account, amount)]  # credit
             else:
                 xn_dict['src'] = [xn.Endpoint(self.account, amount)]  # debit
         else:
-            if fields['Credit'] and fields['Debit']:
+            fieldname_credit = self._fieldname('Credit')
+            fieldname_debit = self._fieldname('Debit')
+            if fields[fieldname_credit] and fields[fieldname_debit]:
                 # this doesn't seem right...
                 raise reader.DataError('Credit and Debit field used; dubious.')
-            elif not fields['Credit'] and not fields['Debit']:
+            elif not fields[fieldname_credit] and not fields[fieldname_debit]:
                 # neither field is supplied; is it metadata?
                 if re.match(
                     r'\s*(?:open|clos)ing\s*balance\s*$',
-                    fields['Description'],
+                    fields[self._fieldname('Description')],
                     flags=re.IGNORECASE
                 ):
                     # yep, looks like metadata
@@ -157,9 +171,10 @@ class Reader(reader.Reader):
                     raise reader.DataError(
                         'unable to process fields: {!r}'.format(fields)
                     )
-            amount = abs(decimal.Decimal(fields['Credit'] or fields['Debit']))
+            amount_raw = fields[fieldname_credit] or fields[fieldname_debit]
+            amount = abs(decimal.Decimal(amount_raw))
             xn_dict['amount'] = amount
-            if fields['Credit']:
+            if fields[fieldname_credit]:
                 xn_dict['dst'] = [xn.Endpoint(self.account, amount)]  # credit
             else:
                 xn_dict['src'] = [xn.Endpoint(self.account, -amount)]  # debit
