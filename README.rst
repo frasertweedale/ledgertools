@@ -11,7 +11,7 @@ visualising data in the Ledger_ accounting system.
   Visualise income or expenditure as a multi-level pie chart.
   Requires Ledger_, PyGTK_ (2.12 or higher) and gtkchartlib_.
 
-.. _Ledger: https://github.com/jwiegley/ledger
+.. _Ledger: https://github.com/ledger/ledger
 .. _PyGTK: http://www.pygtk.org/
 .. _gtkchartlib: http://pypi.python.org/pypi/gtkchartlib
 
