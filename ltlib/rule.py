@@ -108,6 +108,11 @@ class DropOutcome(Outcome):
         super(DropOutcome, self).__init__(*args, value=None, **kwargs)
 
 
+class RebateOutcome(Outcome):
+    def __init__(self, *args, **kwargs):
+        super(RebateOutcome, self).__init__(*args, value=None, **kwargs)
+
+
 class SourceOutcome(Outcome):
     pass
 

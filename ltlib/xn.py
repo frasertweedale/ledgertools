@@ -155,6 +155,8 @@ class Xn(object):
                     key = 'desc'
                 elif isinstance(outcome, rule.DropOutcome):
                     key = 'drop'
+                elif isinstance(outcome, rule.RebateOutcome):
+                    key = 'rebate'
                 else:
                     raise KeyError
                 if key not in scores:
@@ -163,7 +165,7 @@ class Xn(object):
 
         return scores
 
-    def apply_outcomes(self, outcomes, uio, dropped=False):
+    def apply_outcomes(self, outcomes, uio, dropped=False, prevxn=None):
         """Apply the given outcomes to this rule.
 
         If user intervention is required, outcomes are not applied
@@ -200,6 +202,21 @@ class Xn(object):
         if self.dropped and not dropped:
             # do nothing further for dropped xn, unless specifically told to
             return
+
+        # rebate outcomes
+        #
+        # A rebate is a rebate of the previous transaction.
+        # The proportions of credits in the prev xn are kept,
+        # inverted (i.e. made debits) and scaled to the rebate
+        # amount credit amount.
+        if 'rebate' in outcomes and not self.src and prevxn is not None:
+            ratio = self.amount / prevxn.amount
+            def scale(dst_ep):
+                amount = (dst_ep.amount * ratio).quantize(dst_ep.amount)
+                return Endpoint(dst_ep.account, -amount)
+            self.src = map(scale, prevxn.dst)
+            # handle rounding errors
+            self.src[0].amount -= self.amount + sum(x.amount for x in self.src)
 
         # account outcomes
         for outcome in ['src', 'dst']:
@@ -333,6 +350,6 @@ class Xn(object):
             # set endpoints
             setattr(self, end, endpoints)
 
-    def process(self, rules, uio):
+    def process(self, rules, uio, prevxn=None):
         """Matches rules and applies outcomes"""
-        self.apply_outcomes(self.match_rules(rules), uio)
+        self.apply_outcomes(self.match_rules(rules), uio, prevxn=prevxn)

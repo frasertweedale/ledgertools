@@ -90,13 +90,17 @@ xns = getattr(ltlib.readers, readerclass).Reader(
 )
 # TODO catch AttributeError for unknown reader
 xns = list(xns)
+if readerargs.get('reverse', False):
+    xns = list(reversed(xns))
 
 # process transactions
+prevxn = None
 for xn in xns:
-    xn.process(rules, uio)
+    xn.process(rules, uio, prevxn=prevxn)
     xn.complete(uio)
     if not xn.dropped:
         xn.balance()
+    prevxn = xn
 
 # print transactions
 for xn in filter(lambda x: not x.dropped, xns):

@@ -102,6 +102,7 @@ class OutcomeState(object):
         'to': AccountState(rule.DestinationOutcome),
         'desc': DescriptionState(rule.DescriptionOutcome),
         'drop': NoneState(rule.DropOutcome),
+        'rebate': NoneState(rule.RebateOutcome),
     }
 
     def eatwords(self, words):
