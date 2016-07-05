@@ -67,7 +67,12 @@ class Reader(reader.Reader):
     "Credit" field is used.
     """
 
-    def __init__(self, fieldnames=None, fieldremap=None, **kwargs):
+    def __init__(
+            self,
+            fieldnames=None,
+            fieldremap=None,
+            date_format=None,
+            **kwargs):
         """
         Takes an account argument which indicates the account that was
         transacted upon.
@@ -82,6 +87,7 @@ class Reader(reader.Reader):
         super(Reader, self).__init__(**kwargs)
         self.csvreader = csv.DictReader(self.file, fieldnames=fieldnames)
         self.remap = fieldremap
+        self.date_format = date_format
 
     def next(self):
         """Return the next transaction object.
@@ -98,6 +104,7 @@ class Reader(reader.Reader):
         """Parse the date and return a datetime object
 
         The heuristic for determining the date is:
+         - if ``date_format`` is set, parse using strptime
          - if one field of 8 digits, YYYYMMDD
          - split by '-' or '/'
          - (TODO: substitute string months with their numbers)
@@ -112,8 +119,11 @@ class Reader(reader.Reader):
         Return a datetime.date object.
 
         """
-        if len(date) == 8:
-            # YYYYMMDD
+        if self.date_format is not None:
+            return datetime.datetime.strptime(date, self.date_format).date()
+
+        if re.match('\d{8}$', date):
+            # assume YYYYMMDD
             return datetime.date(*map(int, (date[:4], date[4:6], date[6:])))
         try:
             # split by '-' or '/'
