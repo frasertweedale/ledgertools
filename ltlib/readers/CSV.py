@@ -35,6 +35,14 @@ class MetadataException(Exception):
     """
 
 
+def mkdecimal(s):
+    if len(s) >= 1 and s[0] == '$':
+        s = s[1:]
+    elif s.startswith('-$') or s.startswith('+$'):
+        s = s[0] + s[2:]
+    return decimal.Decimal(s.replace(',', ''))
+
+
 class Reader(reader.Reader):
     """CSV statement reader.
 
@@ -146,7 +154,7 @@ class Reader(reader.Reader):
         # amount
         fieldname_amount = self._fieldname('Amount')
         if fieldname_amount in fields:
-            amount = decimal.Decimal(fields[fieldname_amount])
+            amount = mkdecimal(fields[fieldname_amount])
             xn_dict['amount'] = abs(amount)
             if amount > 0:
                 xn_dict['dst'] = [xn.Endpoint(self.account, amount)]  # credit
